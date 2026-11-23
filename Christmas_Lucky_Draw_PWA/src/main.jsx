@@ -47,7 +47,7 @@ function App(){
  }
  async function copyLink(){await navigator.clipboard.writeText(location.href);setNotice('活動連結已複製')}
  const sorted=useMemo(()=>[...gifts].sort((a,b)=>a.number-b.number),[gifts]);
- const visibleGifts=useMemo(()=>sorted.slice(0,count),[sorted,count]);
+ const visibleGifts=useMemo(()=>sorted.filter(g=>Number(g.number)<=Number(count)),[sorted,count]);
  return <main className="shell"><header><div className="snow"><Snowflake/><Snowflake/><Snowflake/></div><div className="brand">CHRISTMAS <span>✦</span> 2026</div><h1>聖誕幸運抽籤</h1><p>Share the joy · Find your lucky gift</p><div className="ornament">🎄　🎁　❄️　🎅　❄️　🎁</div></header>
  <section className="stats"><div><Users/><b>{count}</b><small>抽籤名額</small></div><div><Gift/><b>{total}</b><small>已抽出人數</small></div><div><Sparkles/><b>{Math.max(0,count-total)}</b><small>剩餘名額</small></div></section>
  {!configured?<section className="panel"><h2>雲端服務尚未設定</h2><p>請先依照專案內的 SETUP.md 設定 Supabase，再填入部署環境變數，完成後即可多人同步抽籤。</p></section>:<>
