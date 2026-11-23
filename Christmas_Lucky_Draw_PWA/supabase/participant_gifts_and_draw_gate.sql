@@ -15,6 +15,10 @@ where g.number = p.draw_number
   and btrim(coalesce(g.gift_name,'')) <> ''
   and btrim(coalesce(p.submitted_gift,'')) = '';
 
+-- Add the new vote target column before creating its foreign key and indexes.
+alter table public.gift_votes
+  add column if not exists target_participant_id uuid;
+
 -- The old votes targeted catalog entries, not participant-owned gifts.
 -- They cannot be mapped reliably to the new voting targets, so clear only legacy vote rows.
 delete from public.gift_votes;
