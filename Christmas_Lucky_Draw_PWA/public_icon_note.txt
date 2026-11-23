@@ -1,0 +1,1 @@
+Place icon.svg in public/ (included in deployment instructions).
