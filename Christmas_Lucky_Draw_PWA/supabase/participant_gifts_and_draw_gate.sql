@@ -134,6 +134,9 @@ begin
  if not exists(select 1 from public.participants where id=p_target_participant_id) then
    raise exception '找不到這份禮物';
  end if;
+ if p_participant_id=p_target_participant_id then
+   raise exception '不能投票給自己準備的禮物';
+ end if;
  if exists(select 1 from public.gift_votes where participant_id=p_participant_id and target_participant_id=p_target_participant_id) then
    raise exception '你已經投過這份禮物，不能重複投票';
  end if;
