@@ -39,3 +39,39 @@
 @keyframes podiumTitle{from{transform:scale(.75);opacity:0}to{transform:scale(1);opacity:1}}
 @keyframes stageGlow{from{box-shadow:inset 0 0 0 #e4c56b00}to{box-shadow:inset 0 0 40px #e4c56b88}}
 @media(max-width:380px){.podium-place{padding:8px 3px}.podium-place strong{font-size:11px}.podium-place span{font-size:10px}.podium-crown{font-size:21px}}
+
+
+/* Synchronized full-screen Christmas awards reveal */
+.winner-reveal-overlay{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:18px;background:radial-gradient(ellipse at 50% 8%,#276b49 0%,#123d2d 52%,#071f19 100%);color:#fff;overflow:auto}
+.winner-reveal-overlay:before,.winner-reveal-overlay:after{content:"✦  ❄  ✧  ✦  ❄  ✧  ✦";position:fixed;left:0;right:0;text-align:center;color:#f5df9b;letter-spacing:12px;opacity:.55;font-size:18px;pointer-events:none;animation:winnerTwinkle 2s ease-in-out infinite alternate}
+.winner-reveal-overlay:before{top:22px}.winner-reveal-overlay:after{bottom:22px;animation-delay:1s}
+.winner-countdown-wrap,.winner-stage-wrap{width:min(100%,900px);text-align:center;animation:winnerFadeIn .8s ease both}
+.winner-snow{font-size:25px;color:#f3d98e;letter-spacing:7px;animation:winnerFloat 2s ease-in-out infinite}
+.winner-kicker{margin:12px 0;color:#e9d39a;font-size:11px;font-weight:900;letter-spacing:5px}
+.winner-countdown-wrap h2{font-size:clamp(34px,8vw,66px);margin:12px 0;color:#fff5d6;text-shadow:0 4px 22px #0005}
+.winner-countdown-wrap p,.winner-subtitle{font-size:11px;letter-spacing:4px;color:#e9d39a;font-weight:800}
+.countdown-number{display:flex;align-items:center;justify-content:center;width:clamp(150px,36vw,240px);height:clamp(150px,36vw,240px);margin:20px auto;border:4px solid #e8c76c;border-radius:50%;font-size:clamp(90px,22vw,145px);font-weight:900;color:#ffedb1;background:radial-gradient(circle,#ffffff24,#d4a83c16 65%,transparent 68%);box-shadow:0 0 0 12px #e8c76c18,0 0 65px #f3d47755;animation:countdownPop .85s ease both}
+.winner-bottom{color:#d6e8d9;font-size:13px;letter-spacing:1px}
+.winner-stage-wrap h1{font-size:clamp(27px,6vw,48px);margin:8px 0;color:#fff2c4;text-shadow:0 4px 20px #0007}
+.winner-podium{display:flex;align-items:flex-end;justify-content:center;gap:clamp(5px,2vw,18px);width:100%;max-width:780px;margin:22px auto 0}
+.winner-place{position:relative;flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:14px 7px 0;border-radius:18px 18px 5px 5px;color:#263326;box-shadow:0 12px 32px #0004;overflow:hidden;animation:winnerRise .9s cubic-bezier(.18,.8,.2,1) both}
+.winner-place-1{order:2;height:clamp(275px,48vh,390px);background:linear-gradient(155deg,#fff5c8,#e9bd50 68%,#bd8428);z-index:2;animation-delay:.35s}
+.winner-place-2{order:1;height:clamp(220px,39vh,315px);background:linear-gradient(155deg,#fff,#c7d2d2 70%,#8d9c9c);animation-delay:.65s}
+.winner-place-3{order:3;height:clamp(195px,34vh,275px);background:linear-gradient(155deg,#ffe2ca,#c98d62 70%,#955735);animation-delay:.9s}
+.winner-medal{font-size:clamp(30px,6vw,52px);filter:drop-shadow(0 3px 4px #0002)}
+.winner-rank{font-weight:900;font-size:clamp(13px,2.4vw,18px);margin:5px 0 9px}
+.winner-place strong{font-size:clamp(14px,3vw,23px);line-height:1.35;overflow-wrap:anywhere;max-width:100%}
+.winner-place span{font-size:clamp(11px,2vw,15px);margin-top:8px;line-height:1.45;overflow-wrap:anywhere;max-width:100%}
+.winner-place b{font-size:clamp(12px,2.2vw,17px);margin-top:10px}
+.winner-pillar{position:absolute;bottom:-3px;left:0;right:0;height:32%;display:flex;align-items:center;justify-content:center;font-size:clamp(64px,13vw,112px);font-weight:900;color:#ffffff55;text-shadow:0 3px 8px #0002;border-top:1px solid #ffffff65}
+.winner-place-1 .winner-pillar{height:36%;font-size:clamp(90px,18vw,150px);color:#fff9d055}
+.winner-loading{padding:60px 10px;color:#fff;font-size:16px}
+.winner-congrats{margin:22px 0 8px;color:#f1d78f;font-size:12px;font-weight:900;letter-spacing:5px;animation:winnerTwinkle 1.5s infinite alternate}
+@keyframes winnerFadeIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+@keyframes winnerRise{from{opacity:0;transform:translateY(90px) scale(.92)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes countdownPop{0%{transform:scale(.65);opacity:.3}65%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+@keyframes winnerFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+@keyframes winnerTwinkle{from{opacity:.35}to{opacity:1;text-shadow:0 0 18px #f8dfa0}}
+@media(max-width:480px){.winner-reveal-overlay{padding:12px 8px}.winner-podium{gap:5px;margin-top:20px}.winner-place{padding:12px 4px 0;border-radius:13px 13px 4px 4px}.winner-place-1{height:310px}.winner-place-2{height:250px}.winner-place-3{height:225px}.winner-place span{font-size:10px}.winner-place strong{font-size:14px}.winner-place b{font-size:12px}.winner-rank{font-size:12px}.winner-kicker{letter-spacing:3px}}
+@media(max-height:650px){.winner-place-1{height:250px}.winner-place-2{height:205px}.winner-place-3{height:180px}.winner-stage-wrap h1{font-size:26px}.winner-congrats{margin:12px 0}}
+@media(prefers-reduced-motion:reduce){.winner-reveal-overlay *{animation-duration:.01ms!important;animation-iteration-count:1!important}}
