@@ -77,7 +77,8 @@ returns json language sql security definer set search_path=public,extensions as 
  ) from public.event_settings where id=true;
 $$;
 
-create or replace function public.my_draw(p_participant_id uuid)
+drop function if exists public.my_draw(uuid);
+create function public.my_draw(p_participant_id uuid)
 returns table(number integer,name text,submitted_gift text)
 language sql security definer set search_path=public,extensions as $$
  select draw_number,display_name,participants.submitted_gift
