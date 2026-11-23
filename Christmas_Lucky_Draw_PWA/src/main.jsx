@@ -20,6 +20,7 @@ function App(){
  const [busy,setBusy]=useState(false),[notice,setNotice]=useState(''),[configured,setConfigured]=useState(Boolean(supabase));
  const [showOwnGift,setShowOwnGift]=useState(false),[showAdminGifts,setShowAdminGifts]=useState(false);
  const [podiumTestOpen,setPodiumTestOpen]=useState(false),[podiumTestRunning,setPodiumTestRunning]=useState(false),[podiumTestVisible,setPodiumTestVisible]=useState(false);
+ const [votesPublishedAt,setVotesPublishedAt]=useState(null),[countdown,setCountdown]=useState(10),[publishedTopThree,setPublishedTopThree]=useState([]);
 
  async function load(){
   if(!supabase){setConfigured(false);return}
@@ -27,6 +28,7 @@ function App(){
   if(error){setNotice('雲端資料庫尚未完成更新，請先執行新版 SQL migration。');return}
   setConfigured(true);const limit=Number(event?.participant_limit||25);
   setCount(limit);setLimitInput(limit);setDrawCompleted(Boolean(event?.draw_completed));setTotal(Number(event?.participant_count||0));
+  if(event?.votes_published&&event?.votes_publish_at){setVotesPublishedAt(event.votes_publish_at)}
   const {data:mine}=await supabase.rpc('my_draw',{p_participant_id:pid});
   const me=mine?.[0]||null;setParticipant(me);
   const {data:votes}=await supabase.rpc('my_votes',{p_participant_id:pid});
@@ -38,7 +40,8 @@ function App(){
    setParticipants([]);
   }
  }
- useEffect(()=>{load();if(!supabase)return;const poll=setInterval(load,5000);return()=>clearInterval(poll)},[]);
+ useEffect(()=>{load();if(!supabase)return;const poll=setInterval(load,1000);return()=>clearInterval(poll)},[]);
+ useEffect(()=>{if(!votesPublishedAt||!supabase)return;let finished=false;const tick=async()=>{const elapsed=(Date.now()-new Date(votesPublishedAt).getTime())/1000;const left=Math.max(0,10-Math.floor(elapsed));setCountdown(left);if(left===0&&!finished){finished=true;const {data,error}=await supabase.rpc('public_top_three');if(!error)setPublishedTopThree(data||[]);else setNotice('公布結果讀取失敗：'+error.message)}};tick();const timer=setInterval(tick,200);return()=>clearInterval(timer)},[votesPublishedAt]);
 
  async function draw(e){
   e.preventDefault();
@@ -67,8 +70,9 @@ function App(){
   setBusy(false);
  }
  async function revealVotes(){
-  setBusy(true);const {data,error}=await supabase.rpc('admin_vote_counts',{p_password:password});
-  if(error)setNotice(error.message);else{setVoteCounts(data||[]);setVotesRevealed(true);setNotice('已揭曉最終票數')}
+  if(!window.confirm('確定公布最終投票結果？所有手機與電腦將同步進入 10 秒全螢幕倒數，倒數結束後公開前三名。公布後無法撤回。'))return;
+  setBusy(true);const {error}=await supabase.rpc('admin_publish_votes',{p_password:password});
+  if(error)setNotice(error.message);else{const {data:counts}=await supabase.rpc('admin_vote_counts',{p_password:password});setVoteCounts(counts||[]);setVotesRevealed(true);await load();setNotice('已啟動全裝置同步公布！')}
   setBusy(false);
  }
  async function castVote(targetId){
@@ -95,7 +99,7 @@ function App(){
   if(!resetPassword)return setNotice('請再次輸入管理員密碼確認重置');
   if(!window.confirm('確定全部 Reset？會清除所有參加者、禮物登記、抽籤與投票資料，無法復原。'))return;
   setBusy(true);const {error}=await supabase.rpc('admin_reset_event',{p_password:resetPassword});
-  if(error)setNotice(error.message);else{setParticipant(null);setName('');setSubmittedGift('');setMyVotes([]);setResetPassword('');setNotice('全部 Reset 完成，人數與管理員密碼保留。');await load();await loadAdminParticipants()}
+  if(error)setNotice(error.message);else{setParticipant(null);setName('');setSubmittedGift('');setMyVotes([]);setVotesPublishedAt(null);setPublishedTopThree([]);setCountdown(10);setResetPassword('');setNotice('全部 Reset 完成，人數與管理員密碼保留。');await load();await loadAdminParticipants()}
   setBusy(false);
  }
  async function copyLink(){await navigator.clipboard.writeText(location.href);setNotice('活動連結已複製')}
@@ -118,10 +122,16 @@ function App(){
    <p className="hint">管理員可查看所有登記者資料；一般參加者在抽選完成前無法取得此清單。</p>
    <div className="limit-row"><label>登記人數上限</label><input type="number" min="1" max="25" value={limitInput} onChange={e=>setLimitInput(e.target.value)}/><button onClick={saveLimit} disabled={busy||drawCompleted}>更新人數</button></div>
    <div className="admin-gift-visibility"><span>登記名單（只顯示姓名）</span><button type="button" className="gift-visibility" aria-label={showAdminGifts?'隱藏所有人的禮物':'顯示所有人的禮物'} title={showAdminGifts?'隱藏所有人的禮物':'顯示所有人的禮物'} onClick={()=>setShowAdminGifts(v=>!v)}>{showAdminGifts?<EyeOff size={18}/>:<Eye size={18}/>}</button></div><div className="admin-list">{adminParticipants.map(person=><div className="admin-person" key={person.participant_id}><b>{String(person.draw_number).padStart(2,'0')} 號｜{person.display_name}</b>{showAdminGifts&&<span>禮物：{person.submitted_gift||'未填寫'}</span>}<small>已投 {person.vote_count} 票</small>{drawCompleted&&<button className="danger small-danger" onClick={()=>resetPersonVotes(person)} disabled={busy}>重設此人投票</button>}</div>)}</div>
-   {!drawCompleted?<button className="primary complete-draw" onClick={completeDraw} disabled={busy||adminParticipants.length!==count}> <CheckCircle2 size={17}/> 抽選完畢並開放投票（{adminParticipants.length}/{count}）</button>:<><button className="primary" onClick={revealVotes} disabled={busy}>{votesRevealed?'重新揭曉最終票數':'揭曉最終票數'}</button>{votesRevealed&&<div className="admin-list">{voteCounts.map(x=><div className="admin-person" key={x.target_participant_id}><b>{String(x.draw_number).padStart(2,'0')} 號｜{x.display_name}</b><span>{x.submitted_gift}</span><strong>🗳️ {x.vote_count} 票</strong></div>)}</div>}</>}
+   {!drawCompleted?<button className="primary complete-draw" onClick={completeDraw} disabled={busy||adminParticipants.length!==count}> <CheckCircle2 size={17}/> 抽選完畢並開放投票（{adminParticipants.length}/{count}）</button>:<><button className="primary" onClick={revealVotes} disabled={busy||Boolean(votesPublishedAt)}>{votesPublishedAt?'已公布最終結果':'🏆 公布最終結果（全裝置同步倒數 10 秒）'}</button>{votesRevealed&&<div className="admin-list">{voteCounts.map(x=><div className="admin-person" key={x.target_participant_id}><b>{String(x.draw_number).padStart(2,'0')} 號｜{x.display_name}</b><span>{x.submitted_gift}</span><strong>🗳️ {x.vote_count} 票</strong></div>)}</div>}</>}
    <div className="reset-box"><div className="section-title"><RotateCcw/><h3>全部 Reset</h3></div><p className="hint">清除所有參加者、禮物登記、抽籤與投票資料；人數上限及管理員密碼保留。</p><label>再次輸入管理員密碼</label><input type="password" value={resetPassword} onChange={e=>setResetPassword(e.target.value)} placeholder="輸入管理員密碼以確認 Reset"/><button className="danger" onClick={resetAll} disabled={busy}>全部 Reset</button></div>
    <button className="ghost" onClick={()=>{setAdminOk(false);setPassword('');setResetPassword('');setAdminParticipants([]);setVoteCounts([]);setVotesRevealed(false);setShowAdminGifts(false)}}><LogOut size={16}/> 登出</button>
   </>}</section>}
+
+  {votesPublishedAt&&<div className="winner-reveal-overlay" role="dialog" aria-modal="true" aria-label="聖誕人氣獎公布">
+   {countdown>0?<div className="winner-countdown-wrap"><div className="winner-snow">✦　❄　✦　❄　✦</div><div className="winner-kicker">CHRISTMAS AWARDS 2026</div><h2>聖誕人氣獎</h2><p>WINNERS WILL BE REVEALED IN</p><div className="countdown-number" key={countdown}>{countdown}</div><div className="winner-bottom">準備迎接今年的人氣禮物！</div></div>:<div className="winner-stage-wrap"><div className="winner-kicker">CHRISTMAS AWARDS 2026</div><h1>🏆 聖誕人氣 TOP 3 🏆</h1><p className="winner-subtitle">THE WINNERS ARE</p><div className="winner-podium">
+    {publishedTopThree.length===0?<div className="winner-loading">正在揭曉得獎名單…</div>:<>{[publishedTopThree[1],publishedTopThree[0],publishedTopThree[2]].filter(Boolean).map(person=>{const rank=person.rank;return <div className={'winner-place winner-place-'+rank} key={person.participant_id}><div className="winner-medal">{rank===1?'👑':rank===2?'🥈':'🥉'}</div><div className="winner-rank">第 {rank} 名</div><strong>{person.display_name}</strong><span>{person.submitted_gift}</span><b>{person.vote_count} 票</b><div className="winner-pillar">{rank}</div></div>})}</>}
+   </div><div className="winner-congrats">CONGRATULATIONS ✨</div></div>}
+  </div>}
   {notice&&<div className="notice" role="status">{notice}<button onClick={()=>setNotice('')}>×</button></div>}
   <section className="panel podium-test">
    <div className="section-title"><Sparkles/><h2>頒獎動畫測試模式</h2><span className="test-label">TEST ONLY</span></div>
