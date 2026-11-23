@@ -114,6 +114,23 @@ begin
  return json_build_object('success',true,'submitted_count',v_target_count);
 end $$;
 
+create or replace function public.public_top_three()
+returns table(rank integer,participant_id uuid,display_name text,draw_number integer,submitted_gift text,vote_count bigint)
+language plpgsql security definer set search_path=public,extensions as $
+begin
+ if not coalesce((select votes_published from public.event_settings where id=true),false) then
+   raise exception '投票結果尚未公布';
+ end if;
+ return query
+ select row_number() over(order by count(v.id) desc,p.draw_number)::integer,
+        p.id,p.display_name,p.draw_number,p.submitted_gift,count(v.id)::bigint
+ from public.participants p
+ left join public.gift_votes v on v.target_participant_id=p.id
+ group by p.id,p.display_name,p.draw_number,p.submitted_gift
+ order by count(v.id) desc,p.draw_number
+ limit 3;
+end $;
+
 -- Admin may reopen one participant: their previous submitted votes are removed and they can submit again.
 create or replace function public.admin_reopen_voting(p_password text,p_participant_id uuid)
 returns boolean language plpgsql security definer set search_path=public,extensions as $$
@@ -148,10 +165,10 @@ begin
  return true;
 end $$;
 
-revoke all on function public.submit_gift_votes(uuid,uuid[]) from public;
+revoke all on function public.public_top_three() from public;\nrevoke all on function public.submit_gift_votes(uuid,uuid[]) from public;
 revoke all on function public.admin_reopen_voting(text,uuid) from public;
 revoke all on function public.admin_publish_votes(text) from public;
-grant execute on function public.submit_gift_votes(uuid,uuid[]) to anon,authenticated;
+grant execute on function public.public_top_three() to anon,authenticated;\ngrant execute on function public.submit_gift_votes(uuid,uuid[]) to anon,authenticated;
 grant execute on function public.admin_reopen_voting(text,uuid) to anon,authenticated;
 grant execute on function public.admin_publish_votes(text) to anon,authenticated;
 
