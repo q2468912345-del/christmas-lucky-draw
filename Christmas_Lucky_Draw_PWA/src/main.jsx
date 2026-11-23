@@ -30,14 +30,23 @@ function App(){
   const {data:list}=await supabase.rpc('public_gifts');
   setGifts(list||[]);
   setTotal((list||[]).filter(x=>x.participant_name).length);
-  const {data:counts}=await supabase.rpc('public_vote_counts');
-  setVoteCounts(Object.fromEntries((counts||[]).map(x=>[Number(x.gift_number),Number(x.vote_count)])));
   const {data:votes}=await supabase.rpc('my_votes',{p_participant_id:pid});
   setMyVotes((votes||[]).map(x=>Number(x.gift_number)));
  }
  useEffect(()=>{load(); if(!supabase)return; const poll=setInterval(load,5000); const ch=supabase.channel('draw-live').on('postgres_changes',{event:'*',schema:'public',table:'gift_numbers'},()=>load()).on('postgres_changes',{event:'*',schema:'public',table:'participants'},()=>load()).subscribe(); return()=>{clearInterval(poll);supabase.removeChannel(ch)}},[]);
  async function draw(e){e.preventDefault(); if(!name.trim())return setNotice('請輸入姓名'); setBusy(true);setNotice(''); const {data,error}=await supabase.rpc('draw_number',{p_name:name.trim(),p_participant_id:pid}); if(error)setNotice(error.message);else{setParticipant(data);setNotice('抽籤成功！請記住你的號碼。'); await load()} setBusy(false)}
- async function login(){setBusy(true);const {data,error}=await supabase.rpc('admin_check',{p_password:password}); if(error||!data){setNotice('管理員密碼錯誤');setAdminOk(false)}else{setAdminOk(true);setNotice('管理員驗證成功')}setBusy(false)}
+ async function refreshAdminVoteCounts(){
+  if(!adminOk||!password)return;
+  const {data,error}=await supabase.rpc('admin_vote_counts',{p_password:password});
+  if(!error)setVoteCounts(Object.fromEntries((data||[]).map(x=>[Number(x.gift_number),Number(x.vote_count)])));
+ }
+ useEffect(()=>{
+  if(!adminOk)return;
+  refreshAdminVoteCounts();
+  const timer=setInterval(refreshAdminVoteCounts,5000);
+  return()=>clearInterval(timer);
+ },[adminOk,password]);
+ async function login(){setBusy(true);const {data,error}=await supabase.rpc('admin_check',{p_password:password}); if(error||!data){setNotice('管理員密碼錯誤');setAdminOk(false)}else{setAdminOk(true);const {data:counts}=await supabase.rpc('admin_vote_counts',{p_password:password});setVoteCounts(Object.fromEntries((counts||[]).map(x=>[Number(x.gift_number),Number(x.vote_count)])));setNotice('管理員驗證成功')}setBusy(false)}
  async function saveLimit(){const v=Number(limitInput);if(!Number.isInteger(v)||v<1||v>25){setNotice('人數必須介於 1 到 25 人');return}setBusy(true);const {error}=await supabase.rpc('admin_set_limit',{p_password:password,p_limit:v});setNotice(error?error.message:`抽籤人數已設定為 ${v} 人`);if(!error)await load();setBusy(false)}
  async function castVote(giftNumber){
   if(!participant){setNotice('請先完成抽籤，再進行投票');return}
@@ -89,13 +98,13 @@ function App(){
  <section className="stats"><div><Users/><b>{count}</b><small>抽籤名額</small></div><div><Gift/><b>{total}</b><small>已抽出人數</small></div><div><Sparkles/><b>{Math.max(0,count-total)}</b><small>剩餘名額</small></div></section>
  {!configured?<section className="panel"><h2>雲端服務尚未設定</h2><p>請先依照專案內的 SETUP.md 設定 Supabase，再填入部署環境變數，完成後即可多人同步抽籤。</p></section>:<>
  {!participant?<form className="panel" onSubmit={draw}><div className="section-title"><Gift/><h2>抽出你的聖誕號碼</h2></div><label>你的姓名</label><input value={name} onChange={e=>setName(e.target.value)} maxLength="40" placeholder="請輸入姓名" required/><button disabled={busy||total>=count} className="primary">{busy?'抽籤中…':'🎁 開始抽籤'}</button><p className="hint">每位參加者限抽一次，抽出後號碼即固定。</p></form>:<section className="panel result"><div>YOUR LUCKY NUMBER</div><div className="big-number">{String(participant.number).padStart(2,'0')}</div><h2>恭喜 {participant.name}！</h2><p>請記住你的號碼，並到下方查看禮物清單。</p></section>}
- <section className="panel"><div className="section-title"><Gift/><h2>公開禮物清單</h2><span className="live">LIVE</span></div><p className="hint">所有人都能看到已設定的禮物與票數。每人有 3 票，每份禮物限投 1 次；投票不會顯示投票者姓名。</p><div className="vote-summary">{participant?<>你已使用 <b>{myVotes.length}</b> / 3 票，剩餘 <b>{Math.max(0,3-myVotes.length)}</b> 票</>:'完成抽籤後即可匿名投票'}</div><div className="gift-grid">{visibleGifts.map(g=><article className="gift-card" key={g.number}><div className="number">{String(g.number).padStart(2,'0')} 號</div><div className="gift-name">{g.gift_name||'🎁 神秘禮物'}</div>{g.participant_name&&<small>已抽出</small>}{g.gift_name?.trim()&&<div className="vote-footer"><span>🗳️ {voteCounts[g.number]||0} 票</span><button className={myVotes.includes(g.number)?'voted':'vote-button'} onClick={()=>castVote(g.number)} disabled={busy||!participant||myVotes.includes(g.number)||myVotes.length>=3}>{myVotes.includes(g.number)?'已投票':myVotes.length>=3?'票數已用完':'投一票'}</button></div>}</article>)}</div></section>
+ <section className="panel"><div className="section-title"><Gift/><h2>公開禮物清單</h2><span className="live">LIVE</span></div><p className="hint">所有人都能看到已設定的禮物。票數僅管理員登入後可查看。每人有 3 票，每份禮物限投 1 次；投票不會顯示投票者姓名。</p><div className="vote-summary">{participant?<>你已使用 <b>{myVotes.length}</b> / 3 票，剩餘 <b>{Math.max(0,3-myVotes.length)}</b> 票</>:'完成抽籤後即可匿名投票'}</div><div className="gift-grid">{visibleGifts.map(g=><article className="gift-card" key={g.number}><div className="number">{String(g.number).padStart(2,'0')} 號</div><div className="gift-name">{g.gift_name||'🎁 神秘禮物'}</div>{g.participant_name&&<small>已抽出</small>}{g.gift_name?.trim()&&<div className="vote-footer"><button className={myVotes.includes(g.number)?'voted':'vote-button'} onClick={()=>castVote(g.number)} disabled={busy||!participant||myVotes.includes(g.number)||myVotes.length>=3}>{myVotes.includes(g.number)?'已投票':myVotes.length>=3?'票數已用完':'投一票'}</button></div>}</article>)}</div></section>
  </>}
  <footer><button className="ghost" onClick={copyLink}><Copy size={16}/> 複製活動連結</button><button className="ghost" onClick={()=>{setAdminOpen(!adminOpen);setAdminOk(false)}}><LockKeyhole size={16}/> 管理員</button></footer>
  {adminOpen&&<section className="panel admin"><div className="section-title"><LockKeyhole/><h2>管理員後台</h2></div>{!adminOk?<><label>管理員密碼</label><input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="輸入管理員密碼"/><button className="primary" onClick={login} disabled={busy}>登入管理員</button></>:<>
  <p className="hint">設定參加人數（1–25 人），再編輯號碼對應的禮物。</p>
  <div className="limit-row"><label>參加人數</label><input type="number" min="1" max="25" value={limitInput} onChange={e=>setLimitInput(e.target.value)}/><button onClick={saveLimit} disabled={busy}>更新人數</button></div>
- {sorted.slice(0,count).map(g=><div className="edit-row" key={g.number}><b>{roman(g.number)}</b><input value={giftEdits[g.number]??g.gift_name??''} onChange={e=>setGiftEdits({...giftEdits,[g.number]:e.target.value})} placeholder="輸入禮物名稱"/></div>)}
+ {sorted.slice(0,count).map(g=><div className="edit-row" key={g.number}><b>{roman(g.number)}</b><input value={giftEdits[g.number]??g.gift_name??''} onChange={e=>setGiftEdits({...giftEdits,[g.number]:e.target.value})} placeholder="輸入禮物名稱"/><small className="admin-vote-count">🗳️ {voteCounts[g.number]||0} 票</small></div>)}
  <button className="primary save-all-gifts" onClick={saveAllGifts} disabled={busy}>{busy?'儲存中…':'儲存所有禮物'}</button>
  <div className="reset-box"><div className="section-title"><RotateCcw/><h3>全部 Reset</h3></div><p className="hint">清除所有參加者、抽籤紀錄及禮物名稱。抽籤名額與管理員密碼會保留，此操作無法復原。</p><label>再次輸入管理員密碼</label><input type="password" value={resetPassword} onChange={e=>setResetPassword(e.target.value)} placeholder="輸入管理員密碼以確認 Reset"/><button className="danger" onClick={resetAll} disabled={busy}>{busy?'處理中…':'全部 Reset'}</button></div>
  <button className="ghost" onClick={()=>{setAdminOk(false);setPassword('');setResetPassword('')}}><LogOut size={16}/> 登出</button>
