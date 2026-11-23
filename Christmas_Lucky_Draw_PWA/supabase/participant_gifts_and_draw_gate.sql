@@ -179,7 +179,7 @@ returns boolean language plpgsql security definer set search_path=public,extensi
 begin
  perform pg_advisory_xact_lock(817263);
  if not coalesce(public.admin_check(p_password),false) then raise exception '管理員密碼錯誤'; end if;
- delete from public.participants;
+ delete from public.participants where true;
  update public.gift_numbers set gift_name='',updated_at=now();
  update public.event_settings set draw_completed=false where id=true;
  return true;
