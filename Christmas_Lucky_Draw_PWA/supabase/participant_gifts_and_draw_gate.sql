@@ -64,6 +64,7 @@ create or replace function public.public_event()
 returns json language sql security definer set search_path=public,extensions as $$
  select json_build_object(
    'participant_limit',participant_limit,
+   'participant_count',(select count(*) from public.participants),
    'draw_completed',draw_completed
  ) from public.event_settings where id=true;
 $$;
@@ -131,9 +132,6 @@ begin
  end if;
  if not exists(select 1 from public.participants where id=p_target_participant_id) then
    raise exception '找不到這份禮物';
- end if;
- if p_participant_id=p_target_participant_id then
-   raise exception '不能投票給自己準備的禮物';
  end if;
  if exists(select 1 from public.gift_votes where participant_id=p_participant_id and target_participant_id=p_target_participant_id) then
    raise exception '你已經投過這份禮物，不能重複投票';
