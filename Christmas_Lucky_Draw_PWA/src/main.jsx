@@ -20,6 +20,7 @@ function App(){
  const [busy,setBusy]=useState(false),[notice,setNotice]=useState(''),[configured,setConfigured]=useState(Boolean(supabase));
  const [showOwnGift,setShowOwnGift]=useState(false),[showAdminGifts,setShowAdminGifts]=useState(false);
  const [podiumTestOpen,setPodiumTestOpen]=useState(false),[podiumTestRunning,setPodiumTestRunning]=useState(false),[podiumTestVisible,setPodiumTestVisible]=useState(false);
+ const [testRevealOpen,setTestRevealOpen]=useState(false),[testRevealCountdown,setTestRevealCountdown]=useState(10),[testRevealEndsAt,setTestRevealEndsAt]=useState(null);
  const [votesPublishedAt,setVotesPublishedAt]=useState(null),[countdown,setCountdown]=useState(10),[publishedTopThree,setPublishedTopThree]=useState([]);
 
  async function load(){
@@ -104,10 +105,17 @@ function App(){
  }
  async function copyLink(){await navigator.clipboard.writeText(location.href);setNotice('活動連結已複製')}
  function runPodiumTest(){
-  setPodiumTestOpen(true);setPodiumTestRunning(true);setPodiumTestVisible(false);
-  window.setTimeout(()=>setPodiumTestVisible(true),1800);
-  window.setTimeout(()=>setPodiumTestRunning(false),3200);
+  setTestRevealCountdown(10);
+  setTestRevealEndsAt(Date.now()+10000);
+  setTestRevealOpen(true);
  }
+ useEffect(()=>{
+  if(!testRevealOpen||!testRevealEndsAt)return;
+  const tick=()=>setTestRevealCountdown(Math.max(0,Math.ceil((testRevealEndsAt-Date.now())/1000)));
+  tick();
+  const timer=setInterval(tick,100);
+  return()=>clearInterval(timer);
+ },[testRevealOpen,testRevealEndsAt]);
  const remaining=Math.max(0,count-total);
  const sorted=useMemo(()=>[...participants].sort((a,b)=>a.draw_number-b.draw_number),[participants]);
  return <main className="shell">
@@ -127,6 +135,14 @@ function App(){
    <button className="ghost" onClick={()=>{setAdminOk(false);setPassword('');setResetPassword('');setAdminParticipants([]);setVoteCounts([]);setVotesRevealed(false);setShowAdminGifts(false)}}><LogOut size={16}/> 登出</button>
   </>}</section>}
 
+  {testRevealOpen&&<div className="winner-reveal-overlay test-winner-overlay" role="dialog" aria-modal="true" aria-label="頒獎動畫測試">
+   <button className="winner-test-close" onClick={()=>setTestRevealOpen(false)}>✕ 關閉測試</button>
+   {testRevealCountdown>0?<div className="winner-countdown-wrap"><div className="winner-snow">✦　❄　✦　❄　✦</div><div className="winner-kicker">TEST PREVIEW · CHRISTMAS AWARDS 2026</div><h2>聖誕人氣獎</h2><p>WINNERS WILL BE REVEALED IN</p><div className="countdown-number" key={testRevealCountdown}>{testRevealCountdown}</div><div className="winner-bottom">這是測試倒數，不會影響正式投票</div></div>:<div className="winner-stage-wrap"><div className="winner-kicker">TEST PREVIEW · CHRISTMAS AWARDS 2026</div><h1>🏆 聖誕人氣 TOP 3 🏆</h1><p className="winner-subtitle">THE WINNERS ARE</p><div className="winner-podium">
+    <div className="winner-place winner-place-2"><div className="winner-medal">🥈</div><div className="winner-rank">第 2 名</div><strong>王小美</strong><span>藍牙耳機</span><b>8 票</b><div className="winner-pillar">2</div></div>
+    <div className="winner-place winner-place-1"><div className="winner-medal">👑</div><div className="winner-rank">第 1 名</div><strong>陳小明</strong><span>拍立得相機</span><b>12 票</b><div className="winner-pillar">1</div></div>
+    <div className="winner-place winner-place-3"><div className="winner-medal">🥉</div><div className="winner-rank">第 3 名</div><strong>林大華</strong><span>香氛禮盒</span><b>6 票</b><div className="winner-pillar">3</div></div>
+   </div><div className="winner-congrats">TEST DATA ONLY · CONGRATULATIONS ✨</div></div>}
+  </div>}
   {votesPublishedAt&&<div className="winner-reveal-overlay" role="dialog" aria-modal="true" aria-label="聖誕人氣獎公布">
    {countdown>0?<div className="winner-countdown-wrap"><div className="winner-snow">✦　❄　✦　❄　✦</div><div className="winner-kicker">CHRISTMAS AWARDS 2026</div><h2>聖誕人氣獎</h2><p>WINNERS WILL BE REVEALED IN</p><div className="countdown-number" key={countdown}>{countdown}</div><div className="winner-bottom">準備迎接今年的人氣禮物！</div></div>:<div className="winner-stage-wrap"><div className="winner-kicker">CHRISTMAS AWARDS 2026</div><h1>🏆 聖誕人氣 TOP 3 🏆</h1><p className="winner-subtitle">THE WINNERS ARE</p><div className="winner-podium">
     {publishedTopThree.length===0?<div className="winner-loading">正在揭曉得獎名單…</div>:<>{[publishedTopThree[1],publishedTopThree[0],publishedTopThree[2]].filter(Boolean).map(person=>{const rank=person.rank;return <div className={'winner-place winner-place-'+rank} key={person.participant_id}><div className="winner-medal">{rank===1?'👑':rank===2?'🥈':'🥉'}</div><div className="winner-rank">第 {rank} 名</div><strong>{person.display_name}</strong><span>{person.submitted_gift}</span><b>{person.vote_count} 票</b><div className="winner-pillar">{rank}</div></div>})}</>}
