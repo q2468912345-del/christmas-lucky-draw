@@ -18,7 +18,8 @@ begin
   delete from public.participants where true;
   update public.gift_numbers
      set gift_name = '',
-         updated_at = now();
+         updated_at = now()
+   where true;
 
   return true;
 end;
