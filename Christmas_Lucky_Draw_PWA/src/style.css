@@ -79,3 +79,11 @@
 
 .winner-test-close{position:fixed;top:14px;right:14px;z-index:3;border:1px solid #f2d99a88;border-radius:999px;padding:9px 14px;background:#ffffff18;color:#fff;font-size:12px;font-weight:800;backdrop-filter:blur(8px)}
 .test-winner-overlay{padding-top:56px}
+
+
+.rank-control{margin:18px 0;padding:18px;border:1px solid #d8c28a;border-radius:16px;background:#fffaf0;display:grid;gap:10px}
+.rank-control h3{margin:0;color:#7b5420}
+.rank-control .rank-button{width:100%;border:1px solid #b99755;border-radius:10px;padding:12px;background:#fff;color:#684719;font-weight:800}
+.rank-control .rank-button:disabled{opacity:.45;cursor:not-allowed}
+.rank-control .rank-first:not(:disabled){background:#9a702d;color:#fff}
+.rank-control small{color:#78664a;text-align:center}
