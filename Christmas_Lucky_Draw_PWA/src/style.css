@@ -10,3 +10,32 @@
 .own-gift{padding:10px;background:#f3f0e5;border-radius:10px}.gift-owner{font-size:12px;color:#6c756b;margin-top:5px}.admin-list{display:grid;gap:8px;margin:14px 0}.admin-person{display:grid;gap:5px;padding:12px;border:1px solid #e8dfd0;border-radius:12px;background:#fff}.admin-person b{font-size:13px;color:#9d343b}.admin-person span{font-size:13px;overflow-wrap:anywhere}.admin-person small{color:#777;font-size:11px}.complete-draw{display:flex;align-items:center;justify-content:center;gap:8px}.small-danger{width:auto!important;margin:0!important;padding:7px 10px!important;font-size:11px!important}.gift-card{display:flex;flex-direction:column}.vote-footer{margin-top:auto;padding-top:10px}.gift-owner{padding-top:3px}
 
 .own-gift{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}.own-gift b{overflow-wrap:anywhere}.gift-visibility{display:inline-flex;align-items:center;justify-content:center;border:0;background:transparent;color:#36533f;padding:5px;border-radius:8px;cursor:pointer}.gift-visibility:hover{background:#e8e3d6}.gift-visibility svg{display:block}
+
+/* Isolated podium animation test mode */
+.podium-test{border:1px dashed #b99b61;background:linear-gradient(145deg,#fffdf8,#f5edda)}
+.test-label{margin-left:auto;font-size:10px;font-weight:900;letter-spacing:1px;color:#9b7130;background:#f3e7c8;border-radius:20px;padding:5px 9px}
+.podium-test-stage{margin-top:16px;min-height:230px;padding:18px 12px;border-radius:16px;background:radial-gradient(circle at 50% 0%,#fff8dc,#e9f0e6 65%,#dfe9dc);overflow:hidden;text-align:center}
+.reveal-countdown{padding:35px 8px;animation:revealPulse 1s ease-in-out infinite alternate}
+.reveal-countdown h2{color:#174b35;margin:8px 0;font-size:22px}
+.reveal-countdown p{font-size:11px;letter-spacing:4px;color:#9b7130;font-weight:900}
+.reveal-star{font-size:42px;color:#c49a38;animation:revealSpin 1.4s linear infinite}
+.podium-test-title{font-weight:900;color:#9b7130;font-size:19px;margin:4px 0 18px;animation:podiumTitle .8s ease-out both}
+.podium{display:flex;align-items:flex-end;justify-content:center;gap:7px;max-width:520px;margin:0 auto}
+.podium-place{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:10px 5px 12px;border-radius:12px 12px 5px 5px;box-shadow:0 5px 15px #243b2b18;animation:podiumRise .8s cubic-bezier(.2,.8,.2,1) both}
+.podium-place strong,.podium-place span,.podium-place small{max-width:100%;overflow-wrap:anywhere}
+.podium-place strong{font-size:13px;margin:5px 0}
+.podium-place span{font-size:11px}
+.podium-place small{font-size:10px;margin-top:5px}
+.podium-place b{font-size:11px}
+.podium-crown{font-size:25px;margin-bottom:5px}
+.place-1{min-height:175px;background:linear-gradient(160deg,#fff0b7,#e6bd5c);animation-delay:.18s}
+.place-2{min-height:142px;background:linear-gradient(160deg,#f5f5f2,#c8d0ce);animation-delay:.38s}
+.place-3{min-height:122px;background:linear-gradient(160deg,#f6d8bd,#c88d62);animation-delay:.58s}
+.test-footnote{margin:14px 0 0}
+.podium-animating{animation:stageGlow 1.2s ease-in-out infinite alternate}
+@keyframes revealPulse{from{transform:scale(.97);opacity:.75}to{transform:scale(1.02);opacity:1}}
+@keyframes revealSpin{to{transform:rotate(360deg)}}
+@keyframes podiumRise{from{transform:translateY(45px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes podiumTitle{from{transform:scale(.75);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes stageGlow{from{box-shadow:inset 0 0 0 #e4c56b00}to{box-shadow:inset 0 0 40px #e4c56b88}}
+@media(max-width:380px){.podium-place{padding:8px 3px}.podium-place strong{font-size:11px}.podium-place span{font-size:10px}.podium-crown{font-size:21px}}
