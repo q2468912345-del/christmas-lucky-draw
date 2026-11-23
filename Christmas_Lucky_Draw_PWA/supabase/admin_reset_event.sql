@@ -15,7 +15,7 @@ begin
     raise exception '管理員密碼錯誤';
   end if;
 
-  delete from public.participants;
+  delete from public.participants where true;
   update public.gift_numbers
      set gift_name = '',
          updated_at = now();
