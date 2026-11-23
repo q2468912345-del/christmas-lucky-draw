@@ -19,9 +19,7 @@ function App(){
  const [limitInput,setLimitInput]=useState(25),[resetPassword,setResetPassword]=useState('');
  const [busy,setBusy]=useState(false),[notice,setNotice]=useState(''),[configured,setConfigured]=useState(Boolean(supabase));
  const [showOwnGift,setShowOwnGift]=useState(false),[showAdminGifts,setShowAdminGifts]=useState(false);
- const [podiumTestOpen,setPodiumTestOpen]=useState(false),[podiumTestRunning,setPodiumTestRunning]=useState(false),[podiumTestVisible,setPodiumTestVisible]=useState(false);
- const [testRevealOpen,setTestRevealOpen]=useState(false),[testRevealCountdown,setTestRevealCountdown]=useState(10),[testRevealEndsAt,setTestRevealEndsAt]=useState(null);
- const [votesPublishedAt,setVotesPublishedAt]=useState(null),[countdown,setCountdown]=useState(10),[publishedTopThree,setPublishedTopThree]=useState([]),[publishedRank,setPublishedRank]=useState(0);
+ const [votesPublishedAt,setVotesPublishedAt]=useState(null),[countdown,setCountdown]=useState(10),[publishedTopThree,setPublishedTopThree]=useState([]);
 
  async function load(){
   if(!supabase){setConfigured(false);return}
@@ -29,7 +27,7 @@ function App(){
   if(error){setNotice('雲端資料庫尚未完成更新，請先執行新版 SQL migration。');return}
   setConfigured(true);const limit=Number(event?.participant_limit||25);
   setCount(limit);setLimitInput(limit);setDrawCompleted(Boolean(event?.draw_completed));setTotal(Number(event?.participant_count||0));
-  setVotesPublishedAt(event?.votes_published&&event?.votes_publish_at?event.votes_publish_at:null);\n  setPublishedRank(Number(event?.published_rank||0));
+  setVotesPublishedAt(event?.votes_published&&event?.votes_publish_at?event.votes_publish_at:null);
   const {data:mine}=await supabase.rpc('my_draw',{p_participant_id:pid});
   const me=mine?.[0]||null;setParticipant(me);
   const {data:votes}=await supabase.rpc('my_votes',{p_participant_id:pid});
@@ -76,7 +74,7 @@ function App(){
   if(error)setNotice(error.message);else{const {data:counts}=await supabase.rpc('admin_vote_counts',{p_password:password});setVoteCounts(counts||[]);setVotesRevealed(true);await load();setNotice('已啟動全裝置同步公布！')}
   setBusy(false);
  }
- async function publishRank(rank){\n  if(!window.confirm('確定現在公布第 '+rank+' 名？所有裝置將同步顯示此名次。'))return;\n  setBusy(true);const {error}=await supabase.rpc('admin_publish_rank',{p_password:password,p_rank:rank});\n  if(error)setNotice(error.message);else{setPublishedRank(rank);setNotice('已同步公布第 '+rank+' 名！')}\n  setBusy(false);\n }\n async function castVote(targetId){
+ async function castVote(targetId){
   if(!participant)return setNotice('請先完成登記與抽籤');
   if(!drawCompleted)return setNotice('管理員尚未宣布抽選完畢');
   if(myVotes.includes(targetId))return setNotice('你已經投過這份禮物，不能重複投票');
@@ -100,22 +98,10 @@ function App(){
   if(!resetPassword)return setNotice('請再次輸入管理員密碼確認重置');
   if(!window.confirm('確定全部 Reset？會清除所有參加者、禮物登記、抽籤與投票資料，無法復原。'))return;
   setBusy(true);const {error}=await supabase.rpc('admin_reset_event',{p_password:resetPassword});
-  if(error)setNotice(error.message);else{setParticipant(null);setName('');setSubmittedGift('');setMyVotes([]);setVotesPublishedAt(null);setPublishedTopThree([]);setPublishedRank(0);setCountdown(10);setResetPassword('');setNotice('全部 Reset 完成，人數與管理員密碼保留。');await load();await loadAdminParticipants()}
+  if(error)setNotice(error.message);else{setParticipant(null);setName('');setSubmittedGift('');setMyVotes([]);setVotesPublishedAt(null);setPublishedTopThree([]);setCountdown(10);setResetPassword('');setNotice('全部 Reset 完成，人數與管理員密碼保留。');await load();await loadAdminParticipants()}
   setBusy(false);
  }
  async function copyLink(){await navigator.clipboard.writeText(location.href);setNotice('活動連結已複製')}
- function runPodiumTest(){
-  setTestRevealCountdown(10);
-  setTestRevealEndsAt(Date.now()+10000);
-  setTestRevealOpen(true);
- }
- useEffect(()=>{
-  if(!testRevealOpen||!testRevealEndsAt)return;
-  const tick=()=>setTestRevealCountdown(Math.max(0,Math.ceil((testRevealEndsAt-Date.now())/1000)));
-  tick();
-  const timer=setInterval(tick,100);
-  return()=>clearInterval(timer);
- },[testRevealOpen,testRevealEndsAt]);
  const remaining=Math.max(0,count-total);
  const sorted=useMemo(()=>[...participants].sort((a,b)=>a.draw_number-b.draw_number),[participants]);
  return <main className="shell">
@@ -130,37 +116,17 @@ function App(){
    <p className="hint">管理員可查看所有登記者資料；一般參加者在抽選完成前無法取得此清單。</p>
    <div className="limit-row"><label>登記人數上限</label><input type="number" min="1" max="25" value={limitInput} onChange={e=>setLimitInput(e.target.value)}/><button onClick={saveLimit} disabled={busy||drawCompleted}>更新人數</button></div>
    <div className="admin-gift-visibility"><span>登記名單（只顯示姓名）</span><button type="button" className="gift-visibility" aria-label={showAdminGifts?'隱藏所有人的禮物':'顯示所有人的禮物'} title={showAdminGifts?'隱藏所有人的禮物':'顯示所有人的禮物'} onClick={()=>setShowAdminGifts(v=>!v)}>{showAdminGifts?<EyeOff size={18}/>:<Eye size={18}/>}</button></div><div className="admin-list">{adminParticipants.map(person=><div className="admin-person" key={person.participant_id}><b>{String(person.draw_number).padStart(2,'0')} 號｜{person.display_name}</b>{showAdminGifts&&<span>禮物：{person.submitted_gift||'未填寫'}</span>}<small>已投 {person.vote_count} 票</small>{drawCompleted&&<button className="danger small-danger" onClick={()=>resetPersonVotes(person)} disabled={busy}>重設此人投票</button>}</div>)}</div>
-   {!drawCompleted?<button className="primary complete-draw" onClick={completeDraw} disabled={busy||adminParticipants.length!==count}> <CheckCircle2 size={17}/> 抽選完畢並開放投票（{adminParticipants.length}/{count}）</button>:<><button className="primary" onClick={revealVotes} disabled={busy||Boolean(votesPublishedAt)}>{votesPublishedAt?'已啟動公布流程':'🏆 啟動公布流程（全裝置同步倒數 10 秒）'}</button><div className="rank-control"><h3>🏆 分階段公布得獎名次</h3><p className="hint">{votesPublishedAt?'倒數已啟動，請依序公布第 3、2、1 名；所有參加者裝置會同步更新。':'先按上方「啟動公布流程」完成全裝置 10 秒倒數，接著即可依序公布名次。'}</p><button className="rank-button" onClick={()=>publishRank(3)} disabled={busy||!votesPublishedAt||publishedRank>=3}>公布第 3 名 {publishedRank>=3?'✓':''}</button><button className="rank-button" onClick={()=>publishRank(2)} disabled={busy||!votesPublishedAt||publishedRank>=2||publishedRank<3}>公布第 2 名 {publishedRank>=2?'✓':''}</button><button className="rank-button rank-first" onClick={()=>publishRank(1)} disabled={busy||!votesPublishedAt||publishedRank>=1||publishedRank<2}>公布第 1 名 {publishedRank>=1?'✓':''}</button><small>目前已公布：{publishedRank===0?'尚未公布':publishedRank===3?'第 3 名':publishedRank===2?'第 2 名':'第 1 名（全部完成）'}</small></div>{votesRevealed&&<div className="admin-list">{voteCounts.map(x=><div className="admin-person" key={x.target_participant_id}><b>{String(x.draw_number).padStart(2,'0')} 號｜{x.display_name}</b><span>{x.submitted_gift}</span><strong>🗳️ {x.vote_count} 票</strong></div>)}</div>}</>}
+   {!drawCompleted?<button className="primary complete-draw" onClick={completeDraw} disabled={busy||adminParticipants.length!==count}> <CheckCircle2 size={17}/> 抽選完畢並開放投票（{adminParticipants.length}/{count}）</button>:<><button className="primary" onClick={revealVotes} disabled={busy||Boolean(votesPublishedAt)}>{votesPublishedAt?'已公布最終結果':'🏆 公布最終結果（全裝置同步倒數 10 秒）'}</button>{votesRevealed&&<div className="admin-list">{voteCounts.map(x=><div className="admin-person" key={x.target_participant_id}><b>{String(x.draw_number).padStart(2,'0')} 號｜{x.display_name}</b><span>{x.submitted_gift}</span><strong>🗳️ {x.vote_count} 票</strong></div>)}</div>}</>}
    <div className="reset-box"><div className="section-title"><RotateCcw/><h3>全部 Reset</h3></div><p className="hint">清除所有參加者、禮物登記、抽籤與投票資料；人數上限及管理員密碼保留。</p><label>再次輸入管理員密碼</label><input type="password" value={resetPassword} onChange={e=>setResetPassword(e.target.value)} placeholder="輸入管理員密碼以確認 Reset"/><button className="danger" onClick={resetAll} disabled={busy}>全部 Reset</button></div>
    <button className="ghost" onClick={()=>{setAdminOk(false);setPassword('');setResetPassword('');setAdminParticipants([]);setVoteCounts([]);setVotesRevealed(false);setShowAdminGifts(false)}}><LogOut size={16}/> 登出</button>
   </>}</section>}
 
-  {testRevealOpen&&<div className="winner-reveal-overlay test-winner-overlay" role="dialog" aria-modal="true" aria-label="頒獎動畫測試">
-   <button className="winner-test-close" onClick={()=>setTestRevealOpen(false)}>✕ 關閉測試</button>
-   {testRevealCountdown>0?<div className="winner-countdown-wrap"><div className="winner-snow">✦　❄　✦　❄　✦</div><div className="winner-kicker">TEST PREVIEW · CHRISTMAS AWARDS 2026</div><h2>聖誕人氣獎</h2><p>WINNERS WILL BE REVEALED IN</p><div className="countdown-number" key={testRevealCountdown}>{testRevealCountdown}</div><div className="winner-bottom">這是測試倒數，不會影響正式投票</div></div>:<div className="winner-stage-wrap"><div className="winner-kicker">TEST PREVIEW · CHRISTMAS AWARDS 2026</div><h1>🏆 聖誕人氣 TOP 3 🏆</h1><p className="winner-subtitle">THE WINNERS ARE</p><div className="winner-podium">
-    <div className="winner-place winner-place-2"><div className="winner-medal">🥈</div><div className="winner-rank">第 2 名</div><strong>王小美</strong><span>藍牙耳機</span><b>8 票</b><div className="winner-pillar">2</div></div>
-    <div className="winner-place winner-place-1"><div className="winner-medal">👑</div><div className="winner-rank">第 1 名</div><strong>陳小明</strong><span>拍立得相機</span><b>12 票</b><div className="winner-pillar">1</div></div>
-    <div className="winner-place winner-place-3"><div className="winner-medal">🥉</div><div className="winner-rank">第 3 名</div><strong>林大華</strong><span>香氛禮盒</span><b>6 票</b><div className="winner-pillar">3</div></div>
-   </div><div className="winner-congrats">TEST DATA ONLY · CONGRATULATIONS ✨</div></div>}
-  </div>}
-  {votesPublishedAt&&<div className="winner-reveal-overlay" role="dialog" aria-modal="true" aria-label="聖誕人氣獎分階段公布">
-   {countdown>0?<div className="winner-countdown-wrap"><div className="winner-snow">✦　❄　✦　❄　✦</div><div className="winner-kicker">CHRISTMAS AWARDS 2026</div><h2>聖誕人氣獎</h2><p>WINNERS WILL BE REVEALED IN</p><div className="countdown-number" key={countdown}>{countdown}</div><div className="winner-bottom">倒數結束後，主持人將依序公布第 3、2、1 名</div></div>:<div className="winner-stage-wrap"><div className="winner-kicker">CHRISTMAS AWARDS 2026</div><h1>🏆 聖誕人氣得獎名單 🏆</h1><p className="winner-subtitle">{publishedRank===0?'WAITING FOR THE HOST':publishedRank===3?'3RD PLACE REVEALED':publishedRank===2?'2ND PLACE REVEALED':'1ST PLACE REVEALED'}</p><div className="winner-podium">
-    {publishedRank===0?<div className="winner-loading">主持人即將公布第 3 名，敬請期待…</div>:publishedTopThree.filter(person=>person.rank>=publishedRank).sort((a,b)=>b.rank-a.rank).map(person=><div className={'winner-place winner-place-'+person.rank} key={person.participant_id}><div className="winner-medal">{person.rank===1?'👑':person.rank===2?'🥈':'🥉'}</div><div className="winner-rank">第 {person.rank} 名</div><strong>{person.display_name}</strong><span>{person.submitted_gift}</span><b>{person.vote_count} 票</b><div className="winner-pillar">{person.rank}</div></div>)}
-   </div><div className="winner-congrats">{publishedRank===0?'THE WINNERS ARE COMING…':'CONGRATULATIONS ✨'}</div></div>}
+  {votesPublishedAt&&<div className="winner-reveal-overlay" role="dialog" aria-modal="true" aria-label="聖誕人氣獎公布">
+   {countdown>0?<div className="winner-countdown-wrap"><div className="winner-snow">✦　❄　✦　❄　✦</div><div className="winner-kicker">CHRISTMAS AWARDS 2026</div><h2>聖誕人氣獎</h2><p>WINNERS WILL BE REVEALED IN</p><div className="countdown-number" key={countdown}>{countdown}</div><div className="winner-bottom">準備迎接今年的人氣禮物！</div></div>:<div className="winner-stage-wrap"><div className="winner-kicker">CHRISTMAS AWARDS 2026</div><h1>🏆 聖誕人氣 TOP 3 🏆</h1><p className="winner-subtitle">THE WINNERS ARE</p><div className="winner-podium">
+    {publishedTopThree.length===0?<div className="winner-loading">正在揭曉得獎名單…</div>:<>{[publishedTopThree[1],publishedTopThree[0],publishedTopThree[2]].filter(Boolean).map(person=>{const rank=person.rank;return <div className={'winner-place winner-place-'+rank} key={person.participant_id}><div className="winner-medal">{rank===1?'👑':rank===2?'🥈':'🥉'}</div><div className="winner-rank">第 {rank} 名</div><strong>{person.display_name}</strong><span>{person.submitted_gift}</span><b>{person.vote_count} 票</b><div className="winner-pillar">{rank}</div></div>})}</>}
+   </div><div className="winner-congrats">CONGRATULATIONS ✨</div></div>}
   </div>}
   {notice&&<div className="notice" role="status">{notice}<button onClick={()=>setNotice('')}>×</button></div>}
-  <section className="panel podium-test">
-   <div className="section-title"><Sparkles/><h2>頒獎動畫測試模式</h2><span className="test-label">TEST ONLY</span></div>
-   <p className="hint">使用模擬得票資料預覽公布動畫及前三名頒獎台，不會讀取、修改或公布正式投票資料。</p>
-   <button className="primary" onClick={runPodiumTest}>{podiumTestRunning?'動畫播放中…':'播放動畫與頒獎台預覽'}</button>
-   {podiumTestOpen&&<div className={'podium-test-stage '+(podiumTestRunning?'podium-animating':'')}>
-    {!podiumTestVisible?<div className="reveal-countdown"><div className="reveal-star">✦</div><h2>聖誕人氣獎即將揭曉</h2><p>THE WINNERS ARE…</p></div>:<><div className="podium-test-title">🏆 聖誕人氣禮物 TOP 3 🏆</div><div className="podium">
-      <div className="podium-place place-2"><div className="podium-crown">🥈</div><b>第 2 名</b><strong>王小美</strong><span>藍牙耳機</span><small>8 票</small></div>
-      <div className="podium-place place-1"><div className="podium-crown">👑</div><b>第 1 名</b><strong>陳小明</strong><span>拍立得相機</span><small>12 票</small></div>
-      <div className="podium-place place-3"><div className="podium-crown">🥉</div><b>第 3 名</b><strong>林大華</strong><span>香氛禮盒</span><small>6 票</small></div>
-    </div><p className="hint test-footnote">以上姓名、禮物及票數皆為測試假資料。</p></>}
-   </div>}
-  </section>
   <p className="fine">Made with 🎄 for a joyful Christmas</p>
  </main>;
 }
