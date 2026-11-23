@@ -205,7 +205,7 @@ grant execute on function public.admin_reset_event(text) to anon,authenticated;
 -- Remove obsolete endpoints and signatures from the numbered-gift version.
 revoke all on function public.public_vote_counts() from public,anon,authenticated;
 revoke all on function public.cast_gift_vote(uuid,integer) from public,anon,authenticated;
-revoke all on function public.draw_number(text,uuid) from public,anon,authenticated;
+-- The legacy draw_number(text,uuid) signature was dropped above; no REVOKE is needed.
 -- Remove public access to the obsolete numbered-gift API.
 revoke all on function public.public_gifts() from public,anon,authenticated;
 revoke all on function public.admin_set_gift(text,integer,text) from public,anon,authenticated;
