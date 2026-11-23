@@ -49,7 +49,28 @@ function App(){
   setNotice('投票成功！你的投票是匿名的。');
   await load();setBusy(false);
  }
- async function saveGift(n){setBusy(true);const {error}=await supabase.rpc('admin_set_gift',{p_password:password,p_number:n,p_gift:(giftEdits[n]??gifts.find(g=>g.number===n)?.gift_name??'').trim()});setNotice(error?error.message:`${n} 號禮物已更新`);if(!error)await load();setBusy(false)}
+ async function saveAllGifts(){
+  const changes=sorted.filter(g=>{
+   const edited=giftEdits[g.number];
+   return edited!==undefined && edited.trim()!==(g.gift_name??'').trim();
+  });
+  if(changes.length===0){setNotice('目前沒有尚未儲存的禮物變更');return}
+  setBusy(true);setNotice('');
+  let saved=0;
+  for(const g of changes){
+   const gift=(giftEdits[g.number]??'').trim();
+   const {error}=await supabase.rpc('admin_set_gift',{p_password:password,p_number:g.number,p_gift:gift});
+   if(error){
+    setNotice(`已儲存 ${saved} 項，${roman(g.number)} 儲存失敗：${error.message}。請檢查後再按一次「儲存所有禮物」。`);
+    await load();setBusy(false);return;
+   }
+   saved++;
+  }
+  setGiftEdits({});
+  await load();
+  setNotice(`已成功儲存 ${saved} 項禮物設定`);
+  setBusy(false);
+ }
  async function resetAll(){
   if(!resetPassword){setNotice('請再次輸入管理員密碼確認重置');return}
   if(!window.confirm('確定要全部 Reset 嗎？這會清除所有參加者、抽籤紀錄及禮物名稱，且無法復原。'))return;
@@ -74,7 +95,8 @@ function App(){
  {adminOpen&&<section className="panel admin"><div className="section-title"><LockKeyhole/><h2>管理員後台</h2></div>{!adminOk?<><label>管理員密碼</label><input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="輸入管理員密碼"/><button className="primary" onClick={login} disabled={busy}>登入管理員</button></>:<>
  <p className="hint">設定參加人數（1–25 人），再編輯號碼對應的禮物。</p>
  <div className="limit-row"><label>參加人數</label><input type="number" min="1" max="25" value={limitInput} onChange={e=>setLimitInput(e.target.value)}/><button onClick={saveLimit} disabled={busy}>更新人數</button></div>
- {sorted.slice(0,count).map(g=><div className="edit-row" key={g.number}><b>{roman(g.number)}</b><input value={giftEdits[g.number]??g.gift_name??''} onChange={e=>setGiftEdits({...giftEdits,[g.number]:e.target.value})} placeholder="輸入禮物名稱"/><button onClick={()=>saveGift(g.number)} disabled={busy}>儲存</button></div>)}
+ {sorted.slice(0,count).map(g=><div className="edit-row" key={g.number}><b>{roman(g.number)}</b><input value={giftEdits[g.number]??g.gift_name??''} onChange={e=>setGiftEdits({...giftEdits,[g.number]:e.target.value})} placeholder="輸入禮物名稱"/></div>)}
+ <button className="primary save-all-gifts" onClick={saveAllGifts} disabled={busy}>{busy?'儲存中…':'儲存所有禮物'}</button>
  <div className="reset-box"><div className="section-title"><RotateCcw/><h3>全部 Reset</h3></div><p className="hint">清除所有參加者、抽籤紀錄及禮物名稱。抽籤名額與管理員密碼會保留，此操作無法復原。</p><label>再次輸入管理員密碼</label><input type="password" value={resetPassword} onChange={e=>setResetPassword(e.target.value)} placeholder="輸入管理員密碼以確認 Reset"/><button className="danger" onClick={resetAll} disabled={busy}>{busy?'處理中…':'全部 Reset'}</button></div>
  <button className="ghost" onClick={()=>{setAdminOk(false);setPassword('');setResetPassword('')}}><LogOut size={16}/> 登出</button>
  </>}</section>}
