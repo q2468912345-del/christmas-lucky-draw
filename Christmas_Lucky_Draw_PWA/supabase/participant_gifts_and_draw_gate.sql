@@ -15,18 +15,9 @@ where g.number = p.draw_number
   and btrim(coalesce(g.gift_name,'')) <> ''
   and btrim(coalesce(p.submitted_gift,'')) = '';
 
--- Migrate existing votes: old gift_number N becomes the participant who drew number N.
-alter table public.gift_votes
-  add column if not exists target_participant_id uuid;
-
-update public.gift_votes v
-set target_participant_id = p.id
-from public.participants p
-where p.draw_number = v.gift_number
-  and v.target_participant_id is null;
-
--- Old votes without a matching participant cannot represent a participant gift.
-delete from public.gift_votes where target_participant_id is null;
+-- The old votes targeted catalog entries, not participant-owned gifts.
+-- They cannot be mapped reliably to the new voting targets, so clear only legacy vote rows.
+delete from public.gift_votes;
 
 alter table public.gift_votes alter column gift_number drop not null;
 alter table public.gift_votes
