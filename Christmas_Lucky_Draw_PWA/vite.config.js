@@ -1,2 +1,2 @@
 import {defineConfig} from 'vite'; import react from '@vitejs/plugin-react'; import {VitePWA} from 'vite-plugin-pwa';
-export default defineConfig({plugins:[react(),VitePWA({registerType:'autoUpdate',includeAssets:['icon.svg'],manifest:false,workbox:{globPatterns:['**/*.{js,css,html,svg,webmanifest}']}})],server:{host:'0.0.0.0'}});
+export default defineConfig({plugins:[react(),VitePWA({registerType:'autoUpdate',includeAssets:['icon.svg'],manifest:false,workbox:{globPatterns:['**/*.{js,css,html,svg,webmanifest}'],cleanupOutdatedCaches:true,clientsClaim:true,skipWaiting:true}})],server:{host:'0.0.0.0'}});
