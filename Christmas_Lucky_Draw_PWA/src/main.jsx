@@ -19,6 +19,7 @@ function App(){
  const [limitInput,setLimitInput]=useState(25),[resetPassword,setResetPassword]=useState('');
  const [busy,setBusy]=useState(false),[notice,setNotice]=useState(''),[configured,setConfigured]=useState(Boolean(supabase));
  const [showOwnGift,setShowOwnGift]=useState(false),[showAdminGifts,setShowAdminGifts]=useState(false);
+ const [podiumTestOpen,setPodiumTestOpen]=useState(false),[podiumTestRunning,setPodiumTestRunning]=useState(false),[podiumTestVisible,setPodiumTestVisible]=useState(false);
 
  async function load(){
   if(!supabase){setConfigured(false);return}
@@ -98,6 +99,11 @@ function App(){
   setBusy(false);
  }
  async function copyLink(){await navigator.clipboard.writeText(location.href);setNotice('活動連結已複製')}
+ function runPodiumTest(){
+  setPodiumTestOpen(true);setPodiumTestRunning(true);setPodiumTestVisible(false);
+  window.setTimeout(()=>setPodiumTestVisible(true),1800);
+  window.setTimeout(()=>setPodiumTestRunning(false),3200);
+ }
  const remaining=Math.max(0,count-total);
  const sorted=useMemo(()=>[...participants].sort((a,b)=>a.draw_number-b.draw_number),[participants]);
  return <main className="shell">
@@ -117,6 +123,18 @@ function App(){
    <button className="ghost" onClick={()=>{setAdminOk(false);setPassword('');setResetPassword('');setAdminParticipants([]);setVoteCounts([]);setVotesRevealed(false);setShowAdminGifts(false)}}><LogOut size={16}/> 登出</button>
   </>}</section>}
   {notice&&<div className="notice" role="status">{notice}<button onClick={()=>setNotice('')}>×</button></div>}
+  <section className="panel podium-test">
+   <div className="section-title"><Sparkles/><h2>頒獎動畫測試模式</h2><span className="test-label">TEST ONLY</span></div>
+   <p className="hint">使用模擬得票資料預覽公布動畫及前三名頒獎台，不會讀取、修改或公布正式投票資料。</p>
+   <button className="primary" onClick={runPodiumTest}>{podiumTestRunning?'動畫播放中…':'播放動畫與頒獎台預覽'}</button>
+   {podiumTestOpen&&<div className={'podium-test-stage '+(podiumTestRunning?'podium-animating':'')}>
+    {!podiumTestVisible?<div className="reveal-countdown"><div className="reveal-star">✦</div><h2>聖誕人氣獎即將揭曉</h2><p>THE WINNERS ARE…</p></div>:<><div className="podium-test-title">🏆 聖誕人氣禮物 TOP 3 🏆</div><div className="podium">
+      <div className="podium-place place-2"><div className="podium-crown">🥈</div><b>第 2 名</b><strong>王小美</strong><span>藍牙耳機</span><small>8 票</small></div>
+      <div className="podium-place place-1"><div className="podium-crown">👑</div><b>第 1 名</b><strong>陳小明</strong><span>拍立得相機</span><small>12 票</small></div>
+      <div className="podium-place place-3"><div className="podium-crown">🥉</div><b>第 3 名</b><strong>林大華</strong><span>香氛禮盒</span><small>6 票</small></div>
+    </div><p className="hint test-footnote">以上姓名、禮物及票數皆為測試假資料。</p></>}
+   </div>}
+  </section>
   <p className="fine">Made with 🎄 for a joyful Christmas</p>
  </main>;
 }
