@@ -28,7 +28,7 @@ function App(){
   if(error){setNotice('雲端資料庫尚未完成更新，請先執行新版 SQL migration。');return}
   setConfigured(true);const limit=Number(event?.participant_limit||25);
   setCount(limit);setLimitInput(limit);setDrawCompleted(Boolean(event?.draw_completed));setTotal(Number(event?.participant_count||0));
-  if(event?.votes_published&&event?.votes_publish_at){setVotesPublishedAt(event.votes_publish_at)}
+  setVotesPublishedAt(event?.votes_published&&event?.votes_publish_at?event.votes_publish_at:null);
   const {data:mine}=await supabase.rpc('my_draw',{p_participant_id:pid});
   const me=mine?.[0]||null;setParticipant(me);
   const {data:votes}=await supabase.rpc('my_votes',{p_participant_id:pid});
