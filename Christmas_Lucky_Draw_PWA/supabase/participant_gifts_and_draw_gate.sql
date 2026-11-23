@@ -7,6 +7,14 @@ alter table public.participants
 alter table public.event_settings
   add column if not exists draw_completed boolean not null default false;
 
+-- Carry over any legacy gift names where possible; new registrations store their own gift.
+update public.participants p
+set submitted_gift = g.gift_name
+from public.gift_numbers g
+where g.number = p.draw_number
+  and btrim(coalesce(g.gift_name,'')) <> ''
+  and btrim(coalesce(p.submitted_gift,'')) = '';
+
 -- Migrate existing votes: old gift_number N becomes the participant who drew number N.
 alter table public.gift_votes
   add column if not exists target_participant_id uuid;
@@ -76,7 +84,8 @@ language sql security definer set search_path=public,extensions as $$
  from public.participants where id=p_participant_id;
 $$;
 
-create or replace function public.admin_list_voters(p_password text)
+drop function if exists public.admin_list_voters(text);
+create function public.admin_list_voters(p_password text)
 returns table(participant_id uuid,display_name text,draw_number integer,submitted_gift text,vote_count bigint)
 language plpgsql security definer set search_path=public,extensions as $$
 begin
@@ -143,7 +152,8 @@ begin
  return json_build_object('success',true,'remaining_votes',2-v_count);
 end $$;
 
-create or replace function public.my_votes(p_participant_id uuid)
+drop function if exists public.my_votes(uuid);
+create function public.my_votes(p_participant_id uuid)
 returns table(target_participant_id uuid)
 language sql security definer set search_path=public as $$
  select v.target_participant_id from public.gift_votes v
@@ -151,7 +161,8 @@ language sql security definer set search_path=public as $$
  order by v.created_at,v.target_participant_id;
 $$;
 
-create or replace function public.admin_vote_counts(p_password text)
+drop function if exists public.admin_vote_counts(text);
+create function public.admin_vote_counts(p_password text)
 returns table(target_participant_id uuid,display_name text,draw_number integer,submitted_gift text,vote_count bigint)
 language plpgsql security definer set search_path=public,extensions as $$
 begin
@@ -192,6 +203,10 @@ grant execute on function public.admin_vote_counts(text) to anon,authenticated;
 grant execute on function public.admin_list_voters(text) to anon,authenticated;
 grant execute on function public.admin_reset_event(text) to anon,authenticated;
 
+-- Remove obsolete endpoints and signatures from the numbered-gift version.
+revoke all on function public.public_vote_counts() from public,anon,authenticated;
+revoke all on function public.cast_gift_vote(uuid,integer) from public,anon,authenticated;
+revoke all on function public.draw_number(text,uuid) from public,anon,authenticated;
 -- Remove public access to the obsolete numbered-gift API.
 revoke all on function public.public_gifts() from public,anon,authenticated;
 revoke all on function public.admin_set_gift(text,integer,text) from public,anon,authenticated;
