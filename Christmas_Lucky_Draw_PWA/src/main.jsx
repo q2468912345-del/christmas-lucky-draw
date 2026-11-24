@@ -52,7 +52,7 @@ function App(){
    const {data,error}=await supabase.rpc('admin_check',{p_password:adminPassword});
    if(error||!data){setNotice('管理員驗證失敗，請確認管理員密碼設定。');setBusy(false);return;}
    setPassword(adminPassword);setAdminOpen(true);setAdminOk(true);setVotesRevealed(false);setVoteCounts([]);
-   const {data:list,listError}=await supabase.rpc('admin_list_voters',{p_password:adminPassword});
+   const {data:list,error:listError}=await supabase.rpc('admin_list_voters',{p_password:adminPassword});
    if(listError)setNotice('管理員已登入，但讀取名單失敗：'+listError.message);
    else{setAdminParticipants(list||[]);setNotice('管理員登入成功。');}
    setBusy(false);return;
