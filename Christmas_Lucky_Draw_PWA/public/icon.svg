@@ -1,1 +1,40 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="110" fill="#123d2b"/><path d="M256 70 115 270h80l-55 90h232l-55-90h80z" fill="#1e8b58"/><path d="M232 360h48v75h-48z" fill="#9b5a31"/><circle cx="256" cy="88" r="24" fill="#e6bd55"/><circle cx="170" cy="270" r="13" fill="#fff1c8"/><circle cx="330" cy="305" r="13" fill="#fff1c8"/><path d="M190 205h132" stroke="#d84949" stroke-width="16" stroke-linecap="round"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<defs>
+ <linearGradient id="bg" x2="0" y2="1"><stop stop-color="#f65b55"/><stop offset="1" stop-color="#b91f38"/></linearGradient>
+ <linearGradient id="tree" x2="0" y2="1"><stop stop-color="#35a96c"/><stop offset="1" stop-color="#075337"/></linearGradient>
+ <linearGradient id="gold" x2="0" y2="1"><stop stop-color="#ffeaa0"/><stop offset="1" stop-color="#e4a72e"/></linearGradient>
+</defs>
+<rect width="512" height="512" rx="112" fill="url(#bg)"/>
+<g fill="#fff6d8" opacity=".95"><circle cx="68" cy="100" r="8"/><circle cx="432" cy="112" r="7"/><circle cx="82" cy="248" r="6"/><circle cx="438" cy="278" r="8"/><path d="M120 64v30m-15-15h30m-25-10 20 20m0-20-20 20M390 180v28m-14-14h28m-24-10 20 20m0-20-20 20"/></g>
+<!-- tree -->
+<path d="M350 82 275 183h43l-68 88h48l-79 99h184l-78-99h48l-68-88h43z" fill="url(#tree)" stroke="#d9f2c9" stroke-width="7" stroke-linejoin="round"/>
+<path d="M340 392h40v48h-40z" fill="#8b4b2d"/>
+<path d="m342 53 10 21 23 3-17 16 4 23-20-11-20 11 4-23-17-16 23-3z" fill="url(#gold)" stroke="#fff0b7" stroke-width="5"/>
+<g fill="#ffe28a"><circle cx="319" cy="207" r="9"/><circle cx="359" cy="258" r="9"/><circle cx="308" cy="310" r="9"/></g>
+<!-- Santa -->
+<circle cx="166" cy="238" r="91" fill="#ffd2b2"/>
+<path d="M79 204q-12-95 83-112 78-14 104 70-48-26-90-6-44 21-97 48z" fill="#d92737" stroke="#fff5e8" stroke-width="10" stroke-linejoin="round"/>
+<path d="M74 204q95-63 194-42" fill="none" stroke="#fff8ec" stroke-width="27" stroke-linecap="round"/>
+<circle cx="88" cy="199" r="18" fill="#fff8ec"/>
+<path d="M100 269q66 63 132 0-5 91-67 91-60 0-65-91z" fill="#fff8ef"/>
+<circle cx="135" cy="235" r="7" fill="#57362f"/><circle cx="196" cy="235" r="7" fill="#57362f"/>
+<ellipse cx="166" cy="258" rx="14" ry="10" fill="#ed7770"/>
+<path d="M146 279q20 18 40 0" fill="none" stroke="#9e5147" stroke-width="5" stroke-linecap="round"/>
+<circle cx="112" cy="259" r="12" fill="#f58f87" opacity=".65"/><circle cx="220" cy="259" r="12" fill="#f58f87" opacity=".65"/>
+<!-- reindeer -->
+<path d="M350 187q-40-53-22-78 30 4 39 54M404 188q43-48 28-76-31 0-43 54" fill="#8d512f" stroke="#f4c39a" stroke-width="10" stroke-linecap="round"/>
+<ellipse cx="377" cy="249" rx="68" ry="73" fill="#e9a76c"/>
+<ellipse cx="377" cy="275" rx="48" ry="39" fill="#ffe1bf"/>
+<circle cx="354" cy="236" r="7" fill="#57362f"/><circle cx="401" cy="236" r="7" fill="#57362f"/>
+<ellipse cx="377" cy="264" rx="17" ry="14" fill="#df3545"/>
+<path d="M358 293q19 14 38 0" fill="none" stroke="#9b5942" stroke-width="5" stroke-linecap="round"/>
+<path d="M318 315q58 28 116 0l-8 28q-50 27-101 0z" fill="#d83245"/>
+<!-- gift -->
+<rect x="154" y="335" width="230" height="122" rx="18" fill="#147b4b" stroke="#f5e2a0" stroke-width="7"/>
+<path d="M253 336h34v121h-34z" fill="#f5c64e"/><path d="M154 376h230v31H154z" fill="#f5c64e"/>
+<path d="M270 337q-67-12-57-54 31-27 74 47 35-73 72-44 6 42-72 51" fill="#f5c64e" stroke="#fff0b7" stroke-width="7" stroke-linejoin="round"/>
+<path d="M0 454q120-27 232 0 145 34 280-1v59H0z" fill="#fff5e7"/>
+<path d="M0 475q126-18 244 7 139 27 268-3" fill="none" stroke="#e3e9e5" stroke-width="8"/>
+<rect x="78" y="432" width="356" height="60" rx="27" fill="#a91e35" stroke="#ffe8b3" stroke-width="5"/>
+<text x="256" y="472" font-family="sans-serif" font-size="32" font-weight="900" text-anchor="middle" fill="#fff8e8">聖誕抽籤</text>
+</svg>
